@@ -35,7 +35,7 @@ int main(int argc, char **argv) { // argc : 인자 개수 argv : 인자 목록
     inet_pton(AF_INET, argv[1], &serveraddr.sin_addr); // inet_pton()은 반환값 x, 3번째 인자에 직접 저장
 
     // connect(소켓, 서버주소, 주소크기)
-    int socket_connect = connect(socket_client, &serveraddr, sizeof(serveraddr));
+    int socket_connect = connect(socket_client, (struct sockaddr *)&serveraddr, sizeof(serveraddr));
 
     // 예외 처리 - connect 실패할 경우
     if (socket_connect < 0) {
