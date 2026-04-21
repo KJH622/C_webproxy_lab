@@ -44,3 +44,34 @@ int main(int argc, char **argv)
     Close(connfd); // line:netp:tiny:close
   }
 }
+
+/*
+ * get_filetype - Derive file type from filename
+ */
+void get_filetype(char *filename, char *filetype)
+{
+  // TODO 1: filename에 ".html"이 있으면 filetype을 "text/html"로 설정
+  if (strstr(filename, ".html")) {
+    strcpy(filetype, "text/html");
+  }
+  // TODO 2: filename에 ".gif"이 있으면 filetype을 "image/gif"로 설정
+  else if (strstr(filename, ".gif")) {
+    strcpy(filetype, "image/gif");
+  }
+  // TODO 3: filename에 ".png"이 있으면 filetype을 "image/png"로 설정
+  else if (strstr(filename, ".png")) {
+    strcpy(filetype, "image/png");
+  }
+  // TODO 4: filename에 ".jpg"이 있으면 filetype을 "image/jpeg"로 설정
+  else if (strstr(filename, ".jpg")) {
+    strcpy(filetype, "image/jpeg");
+  }
+  // TODO 5: 위의 어느것도 아니면 filetype을 "text/plain"으로 설정
+  else {
+    strcpy(filetype, "text/plain");
+  }
+  
+  // 힌트: strstr() 함수 사용! (문자열 안에 부분 문자열 찾기)
+  // 예: if (strstr(filename, ".html"))
+  //       strcpy(filetype, "text/html");
+}
