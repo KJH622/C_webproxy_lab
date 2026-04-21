@@ -455,16 +455,136 @@ Content-length: 1234
 
 ---
 
+### Function 4: parse_uri()
+
+**학습 과정:**
+1. URI 파싱 구조 이해
+   - 정적 콘텐츠: "/index.html" → "./index.html"
+   - 동적 콘텐츠: "/cgi-bin/adder?a=10&b=20" → 파일명과 인자 분리
+
+2. CGI 여부 판별
+   - `strstr(uri, "cgi-bin")` 사용
+   - "cgi-bin" 포함 여부로 정적/동적 결정
+
+3. 문자열 포인터 연산 이해
+   - `ptr = strstr(uri, "?")` → '?'의 위치 찾기
+   - `ptr+1` → '?' 다음부터의 문자열
+   - `*ptr = '\0'` → 문자열 끝내기
+
+4. 디렉토리 처리
+   - URI가 "/"로 끝나면 home.html 추가
+   - `uri[strlen(uri)-1]` → 마지막 문자 접근
+
+**핵심 기술 설명:**
+
+1) **CGI 여부 판별**
+```c
+if (!strstr(uri, "cgi-bin"))  // "cgi-bin" 없으면 정적
+```
+
+2) **마지막 문자 접근**
+```c
+uri[strlen(uri)-1]  // 마지막 문자
+// uri = "/index.html" → 'l'
+// uri = "/" → '/'
+```
+
+3) **'?' 검색 및 인자 분리**
+```c
+ptr = strstr(uri, "?");  // '?'의 위치 찾기
+strcpy(cgiargs, ptr+1);  // '?' 다음부터 복사
+*ptr = '\0';             // uri에서 '?' 이후 제거
+```
+
+4) ***ptr = '\0' 원리**
+```
+원본: "/cgi-bin/adder?a=10&b=20"
+                      ↑
+                   ptr가 가리킴
+
+*ptr = '\0' 실행:
+결과: uri는 "/cgi-bin/adder"로 인식됨
+```
+
+**최종 구현:**
+```c
+int parse_uri(char *uri, char *filename, char *cgiargs)
+{
+  char *ptr;
+
+  // "cgi-bin" 여부로 정적/동적 콘텐츠 판별
+  if (!strstr(uri, "cgi-bin")) {
+    // 정적 콘텐츠인 경우
+    strcpy(cgiargs, "");
+    sprintf(filename, ".%s", uri);
+    if (uri[strlen(uri)-1] == '/') {
+        strcat(filename, "home.html");
+    }
+    return 0;
+  }
+  else {
+    // 동적 콘텐츠인 경우
+    ptr = strstr(uri, "?");
+    if (ptr != NULL) {
+        strcpy(cgiargs, ptr+1);
+        *ptr = '\0';  // uri를 '?'에서 끊음
+    }
+    else {
+        strcpy(cgiargs, "");
+    }
+    sprintf(filename, ".%s", uri);
+    return 1;
+  }
+}
+```
+
+**핵심 포인트:**
+- strstr()로 "cgi-bin" 검색해서 정적/동적 판별
+- 포인터 연산 (ptr+1): 다음 위치로 이동
+- *ptr = '\0': C 문자열 특성 활용 (null 종료)
+- 배열 접근으로 마지막 문자 확인
+
+**학습 효과:**
+- 포인터 연산 실제 활용
+- C 문자열의 null 종료 이해
+- URI 파싱 로직 이해
+- 정적/동적 콘텐츠 판별 구현
+
+---
+
+## 포인터와 문자열 심화 학습
+
+### 1. 포인터 배열 접근
+```c
+char *ptr = strstr(uri, "?");
+ptr[0] = '?'
+ptr[1] = 'a'  // ptr+1과 같음
+```
+
+### 2. 문자열 끝내기 (*ptr = '\0')
+```c
+원본: "/cgi-bin/adder?a=10"
+*ptr = '\0' 후: "/cgi-bin/adder"
+```
+
+### 3. 마지막 문자 접근
+```c
+uri = "/index.html"
+길이 = 11
+마지막 인덱스 = 11-1 = 10
+uri[10] = 'l'
+```
+
+---
+
 ## 다음 학습 단계
 
-**남은 함수 (4개/7개):**
-1. parse_uri() - URI 파싱, 정적/동적 판별
-2. serve_static() - mmap을 사용한 정적 파일 전송
-3. serve_dynamic() - fork/execve를 사용한 CGI 실행
-4. doit() - 메인 트랜잭션 핸들러 (모든 함수 조율)
+**남은 함수 (3개/7개):**
+1. serve_static() - mmap을 사용한 정적 파일 전송
+2. serve_dynamic() - fork/execve를 사용한 CGI 실행
+3. doit() - 메인 트랜잭션 핸들러 (모든 함수 조율)
 
 **예상 난이도:**
-- parse_uri(): 중간 (문자열 처리, 경로 조작)
 - serve_static(): 중상 (mmap, 파일 I/O, HTTP 응답)
 - serve_dynamic(): 어려움 (프로세스 제어, CGI 환경)
 - doit(): 어려움 (전체 흐름 조율)
@@ -472,6 +592,6 @@ Content-length: 1234
 ---
 
 **최종 업데이트:** 2026-04-21
-**진행 상황:** 3/7 함수 완료 (43%)
-**학습 시간:** ~ 2시간
-**학습 효율:** 높음 (개념 → 힌트 → 직접 구현 → 검증)
+**진행 상황:** 4/7 함수 완료 (57%)
+**학습 시간:** ~ 3시간
+**학습 효율:** 매우 높음 (개념 → 힌트 → 구현 → 검증 반복)
