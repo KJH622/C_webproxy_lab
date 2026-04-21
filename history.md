@@ -120,9 +120,11 @@
    - 난이도: 중간
    - **상태:** 완성됨! ✅
 
-**5. serve_static()**
+**5. serve_static()** ✅ 완료
    - 클라이언트에게 정적 파일 전송
    - 효율적인 전송을 위해 mmap 사용
+   - TODO 1-5: ✅ 완료
+   - TODO 6-7: ✅ 완료
    - 난이도: 중상
 
 **6. serve_dynamic()**
@@ -168,7 +170,7 @@
 
 ---
 
-## Phase 5: 함수 구현 진행 상황 ✅
+## Phase 5: 함수 구현 진행 상황
 
 **완료된 함수 (4개/7개):**
 1. ✅ get_filetype() - 파일명 → MIME 타입 변환 (8줄)
@@ -190,16 +192,27 @@
    - 포인터 연산: *ptr = '\0'로 문자열 자르기
    - 디렉토리 처리: URI가 "/"로 끝나면 home.html 추가
 
+5. ✅ serve_static() - 전체 완료
+   - TODO 1: get_filetype()으로 MIME 타입 결정
+   - TODO 2: snprintf() 패턴으로 HTTP 응답 헤더 작성
+   - TODO 3: Rio_writen(fd, buf, strlen(buf))으로 헤더 전송
+   - TODO 4: Open(filename, O_RDONLY, 0)으로 파일 열기
+   - TODO 5: Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0)
+   - TODO 6: Rio_writen(fd, srcp, filesize)으로 파일 내용 전송
+   - TODO 7: Munmap(srcp, filesize) + Close(srcfd)로 정리
+
 ---
 
 ## 학습 포인트 정리
 
 **구현한 함수들의 공통 패턴:**
-- sprintf(): 형식화된 문자열을 변수에 저장
+- sprintf() / snprintf(): 형식화된 문자열을 변수에 저장
 - Rio_writen(): Rio를 통한 안전한 데이터 전송
 - strcmp(): 문자열 비교 (0이면 같음, 0이 아니면 다름)
 - strstr(): 부분 문자열 검색
 - while 루프: 특정 조건까지 반복
+- Mmap() + Munmap(): 파일을 메모리에 매핑 후 해제
+- Open() + Close(): 파일 디스크립터 열기/닫기 (반드시 쌍으로)
 
 **Rio 라이브러리의 역할:**
 - 자동 에러 처리
@@ -209,7 +222,7 @@
 ---
 
 **마지막 수정:** 2026-04-21
-**현재 작업:** parse_uri() 함수 구현 완료 ✅
-**다음 목표:** serve_static() 함수 구현 시작
-**진행률:** 4/7 함수 완료 (57%)
+**현재 작업:** serve_dynamic() 구현 시작 ⏳
+**다음 목표:** serve_dynamic() 완료 후 doit() 시작
+**진행률:** 5/7 함수 완료 (~71%)
 **최종 목표:** 7개 함수 모두 완성 및 통합 테스트
