@@ -97,31 +97,41 @@
    - 출력: MIME 타입 (예: "text/html")
    - 구현: strstr()로 확장자 확인 (.html, .gif, .jpg, .png)
    - 난이도: 매우 쉬움 (8줄)
-   - **상태:** 완성됨!
+   - **상태:** 완성됨! ✅
 
-**2. clienterror()** ← 다음 함수
+**2. clienterror()** ✅ 완료
    - HTTP 에러 응답 생성
    - 클라이언트에게 HTML 본문 반환
+   - 구현: sprintf()로 HTML body + 응답 헤더 생성, Rio_writen()으로 전송
+   - 난이도: 중간 (17줄)
+   - **상태:** 완성됨! ✅
 
-**3. read_requesthdrs()**
+**3. read_requesthdrs()** ✅ 완료
    - HTTP 요청 헤더 파싱
-   - 빈 줄(\r\n\r\n)까지 읽기
+   - 빈 줄(\r\n)까지 읽기
+   - 구현: Rio_readlineb()으로 한 줄씩 읽고, strcmp()로 빈 줄 확인, while 루프
+   - 난이도: 쉬움 (7줄)
+   - **상태:** 완성됨! ✅
 
-**4. parse_uri()**
+**4. parse_uri()** ← 다음 함수
    - URI가 정적/동적 콘텐츠인지 판별
    - 파일명 및 CGI 인자 추출
+   - 난이도: 중간
 
 **5. serve_static()**
    - 클라이언트에게 정적 파일 전송
    - 효율적인 전송을 위해 mmap 사용
+   - 난이도: 중상
 
 **6. serve_dynamic()**
    - CGI 프로그램 실행
    - fork → setenv → dup2 → execve → waitpid 패턴 사용
+   - 난이도: 어려움
 
 **7. doit()**
    - 주요 요청 처리 핸들러
    - 모든 위 함수 조율
+   - 난이도: 어려움
 
 ---
 
@@ -156,7 +166,43 @@
 
 ---
 
+## Phase 5: 함수 구현 진행 상황 ✅
+
+**완료된 함수 (3개/7개):**
+1. ✅ get_filetype() - 파일명 → MIME 타입 변환 (8줄)
+   - strstr()로 확장자 확인 (.html, .gif, .jpg, .png)
+   - if-else 구조로 MIME 타입 설정
+
+2. ✅ clienterror() - HTTP 에러 응답 생성 (17줄)
+   - HTML body 구성: sprintf()로 여러 줄에 걸쳐 작성
+   - HTTP 응답 전송: 상태줄 → Content-type → Content-length → 본문
+   - sprintf + Rio_writen 패턴 사용
+
+3. ✅ read_requesthdrs() - HTTP 헤더 파싱 (7줄)
+   - 첫 라인 읽기: Rio_readlineb(rp, buf, MAXLINE)
+   - while(strcmp(buf, "\r\n")) 루프로 빈 줄까지 계속 읽기
+   - 헤더 내용은 처리하지 않고 버림
+
+---
+
+## 학습 포인트 정리
+
+**구현한 함수들의 공통 패턴:**
+- sprintf(): 형식화된 문자열을 변수에 저장
+- Rio_writen(): Rio를 통한 안전한 데이터 전송
+- strcmp(): 문자열 비교 (0이면 같음, 0이 아니면 다름)
+- strstr(): 부분 문자열 검색
+- while 루프: 특정 조건까지 반복
+
+**Rio 라이브러리의 역할:**
+- 자동 에러 처리
+- 버퍼 관리
+- 시스템 콜 횟수 최소화
+
+---
+
 **마지막 수정:** 2026-04-21
-**현재 작업:** get_filetype() 함수 구현 완료 ✅
-**다음 목표:** clienterror() 함수 구현 시작
+**현재 작업:** read_requesthdrs() 함수 구현 완료 ✅
+**다음 목표:** parse_uri() 함수 구현 시작
+**진행률:** 3/7 함수 완료 (43%)
 **최종 목표:** 7개 함수 모두 완성 및 통합 테스트
