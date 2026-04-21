@@ -577,21 +577,170 @@ uri[10] = 'l'
 
 ---
 
+### Function 5: serve_static() - 정적 파일 전송 ✅ 완료
+
+**학습 과정:**
+
+serve_static()는 가장 복합적인 함수로, 여러 단계를 거쳐 구현합니다:
+1. MIME 타입 결정
+2. HTTP 응답 헤더 구성
+3. 헤더 전송
+4. 파일 열기
+5. 파일 메모리 매핑
+6. 매핑된 내용 전송
+7. 정리 (메모리 언매핑, 파일 닫기)
+
+**함수 시그니처:**
+```c
+void serve_static(int fd, char *filename, int filesize)
+{
+  // fd: 클라이언트 소켓
+  // filename: 전송할 파일 경로
+  // filesize: 파일 크기 (바이트)
+}
+```
+
+**구현 단계별 학습:**
+
+#### TODO 1: MIME 타입 결정
+**개념:** 파일의 확장자를 보고 Content-type을 결정
+```c
+get_filetype(filename, filetype);
+// filetype에 "text/html", "image/gif" 등이 저장됨
+```
+
+#### TODO 2: HTTP 응답 헤더 구성
+**핵심 개념:** snprintf() 패턴으로 버퍼 관리
+```c
+char *p = buf;           // 현재 위치 포인터
+int n;                   // 방금 쓴 바이트 수
+int remaining = MAXBUF;  // 남은 공간
+```
+
+**패턴:**
+```c
+n = snprintf(p, remaining, "HTTP/1.0 200 OK\r\n");
+p += n;           // 다음 쓸 위치로 이동
+remaining -= n;   // 남은 공간 감소
+```
+
+#### TODO 3: 헤더 전송
+```c
+Rio_writen(fd, buf, strlen(buf));
+```
+- strlen(buf): 전체 헤더 길이 (마지막 n이 아님!)
+
+#### TODO 4: 파일 열기
+```c
+srcfd = Open(filename, O_RDONLY, 0);
+```
+- O_RDONLY: 읽기 전용 모드
+- 3번째 인자 0: 파일 생성 권한 (읽기만 하므로 무관)
+
+#### TODO 5: 파일 메모리 매핑
+```c
+srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+```
+**학습 포인트:**
+- Open()의 3번째 인자: mode_t (파일 권한)
+- Mmap()의 3번째 인자: int prot (보호 모드)
+- 혼동 주의: O_RDONLY ≠ PROT_READ
+
+#### TODO 6: 매핑된 파일 내용 전송 ✅
+**개념:** 메모리에 매핑된 파일을 클라이언트에게 전송
+```c
+// TODO 6: 매핑된 파일 내용을 클라이언트에게 전송
+Rio_writen(fd, srcp, filesize);
+```
+- srcp: Mmap()이 반환한 메모리 시작 주소
+- filesize: 전송할 바이트 수
+
+#### TODO 7: 정리 ✅
+**개념:** 메모리 매핑과 파일 디스크립터 해제
+```c
+// TODO 7: 메모리 언매핑 + 파일 디스크립터 정리
+Munmap(srcp, filesize);
+Close(srcfd);
+```
+- Munmap + Close는 하나의 정리 단계
+- Close()를 빠뜨리면 파일 디스크립터 누수 발생
+
+**최종 구현:**
+```c
+void serve_static(int fd, char *filename, int filesize)
+{
+  int srcfd;
+  char *srcp, filetype[MAXLINE];
+  char buf[MAXBUF];
+  char *p = buf;
+  int n;
+  int remaining = sizeof(buf);
+
+  // TODO 1: MIME 타입 결정
+  get_filetype(filename, filetype);
+
+  // TODO 2: HTTP 응답 헤더를 buf에 생성
+  n = snprintf(p, remaining, "HTTP/1.0 200 OK\r\n");
+  p += n; remaining -= n;
+
+  n = snprintf(p, remaining, "Server: Tiny Web Server\r\n");
+  p += n; remaining -= n;
+
+  n = snprintf(p, remaining, "Connection: close\r\n");
+  p += n; remaining -= n;
+
+  n = snprintf(p, remaining, "Content-length: %d\r\n", filesize);
+  p += n; remaining -= n;
+
+  n = snprintf(p, remaining, "Content-type: %s\r\n\r\n", filetype);
+  p += n; remaining -= n;
+
+  // TODO 3: 헤더 전송
+  Rio_writen(fd, buf, strlen(buf));
+
+  // TODO 4: 파일 열기
+  srcfd = Open(filename, O_RDONLY, 0);
+
+  // TODO 5: 파일을 메모리에 매핑
+  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+
+  // TODO 6: 매핑된 파일 내용을 클라이언트에게 전송
+  Rio_writen(fd, srcp, filesize);
+
+  // TODO 7: 메모리 언매핑 + 파일 디스크립터 정리
+  Munmap(srcp, filesize);
+  Close(srcfd);
+}
+```
+
+**구현 상태:** ✅ TODO 1-7 전체 완료
+
+**serve_static() 핵심 학습 내용:**
+- snprintf() 포인터 패턴으로 버퍼 안전하게 관리
+- mmap의 효율성 실체험 (시스템 콜 감소)
+- 파일 I/O와 네트워크 I/O의 통합
+- Munmap + Close 반드시 쌍으로 처리
+
+---
+
 ## 다음 학습 단계
 
-**남은 함수 (3개/7개):**
-1. serve_static() - mmap을 사용한 정적 파일 전송
-2. serve_dynamic() - fork/execve를 사용한 CGI 실행
-3. doit() - 메인 트랜잭션 핸들러 (모든 함수 조율)
+**현재 상태:**
+- 완료: 5개 함수 (get_filetype, clienterror, read_requesthdrs, parse_uri, serve_static)
+- 남은 함수: 2개 (serve_dynamic, doit)
+
+**남은 함수:**
+1. serve_dynamic() - fork/execve를 사용한 CGI 실행
+2. doit() - 메인 트랜잭션 핸들러 (모든 함수 조율)
 
 **예상 난이도:**
-- serve_static(): 중상 (mmap, 파일 I/O, HTTP 응답)
-- serve_dynamic(): 어려움 (프로세스 제어, CGI 환경)
-- doit(): 어려움 (전체 흐름 조율)
+- serve_dynamic(): 어려움 (프로세스 제어, CGI 환경, 환경 변수)
+- doit(): 어려움 (전체 흐름 조율, 에러 처리)
 
 ---
 
 **최종 업데이트:** 2026-04-21
-**진행 상황:** 4/7 함수 완료 (57%)
-**학습 시간:** ~ 3시간
+**진행 상황:** 5/7 함수 완료 (~71%)
+**학습 시간:** ~ 5시간
 **학습 효율:** 매우 높음 (개념 → 힌트 → 구현 → 검증 반복)
+**핵심 학습 내용:** 문자열 처리, Rio 라이브러리, mmap, 포인터 연산
