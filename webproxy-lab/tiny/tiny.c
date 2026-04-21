@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 }
 
 /*
- * get_filetype - Derive file type from filename
+ * get_filetype - 파일명을 보고 파일 형식을 결정
  */
 void get_filetype(char *filename, char *filetype)
 {
@@ -77,7 +77,7 @@ void get_filetype(char *filename, char *filetype)
 }
 
 /*
- * clienterror - Returns an error message to the client
+ * clienterror - HTTP 에러 응답을 클라이언트에게 전송
  */
 void clienterror(int fd, char *cause, char *errnum,
                  char *shortmsg, char *longmsg)
@@ -112,7 +112,7 @@ void clienterror(int fd, char *cause, char *errnum,
 }
 
 /*
- * read_requesthdrs - Read HTTP request headers
+ * read_requesthdrs - HTTP 요청의 헤더들을 읽고 버리기
  */
 void read_requesthdrs(rio_t *rp)
 {
@@ -129,28 +129,46 @@ void read_requesthdrs(rio_t *rp)
 }
 
 /*
- * parse_uri - Parse URI into filename and CGI args
- * Returns 1 if static, 0 if dynamic
+ * parse_uri - HTTP 요청의 URI를 파싱해서 정적/동적 콘텐츠 판별
+ * 정적 파일이면 0 반환. CGI 프로그램이면 1 반환.
  */
+// uri : 요청 라인에서 받은 URI
+// filename : 파일명을 저장할 포인터 (출력)
+// cgiargs : CGI 인자를 저장할 포인터 (출력)
 int parse_uri(char *uri, char *filename, char *cgiargs)
 {
   char *ptr;
 
-  // TODO 1: URI에 "cgi-bin"이 있는지 확인
+  // TODO 1: "cgi-bin" 여부로 정적/동적 콘텐츠 판별
   if (!strstr(uri, "cgi-bin")) {
     // 정적 콘텐츠인 경우
     // TODO 1-1: cgiargs를 빈 문자열로 설정
-    // TODO 1-2: filename을 "." + uri로 설정
-    // TODO 1-3: uri가 "/"로 끝나면 filename에 "home.html" 추가
-    // TODO 1-4: return 1 (정적)
+    strcpy(cgiargs, "");
+    // TODO 1-2: filename을 "." + uri로 설정 (예: "./index.html")
+    sprintf(filename, ".%s", uri);
+    // TODO 1-3: uri가 "/"로 끝나면 filename에 "home.html" 추가 (예: "./")
+    if (uri[strlen(uri)-1] == '/') { // 마지막 문자 접근
+        strcat(filename, "home.html");
+    }
+    // TODO 1-4: return 0 (정적 콘텐츠)
+    return 0;
   }
   else {
     // 동적 콘텐츠인 경우
-    // TODO 2-1: "?" 위치 찾기
-    // TODO 2-2: "?" 뒤를 cgiargs로 복사
-    // TODO 2-3: uri에서 "?" 이후 제거
-    // TODO 2-4: filename을 "." + uri로 설정
-    // TODO 2-5: return 0 (동적)
+    // TODO 2-1: '?'를 찾아서 ptr에 저장
+    ptr = strstr(uri, "?");
+    // TODO 2-2: ptr이 NULL이 아니면 cgiargs에 저장, 아니면 빈 문자열
+    if (ptr != NULL) {
+        strcpy(cgiargs, ptr+1);
+        *ptr = '\0'; // ← 이 라인 추가! uri를 '?'에서 끊음
+    }
+    else {
+        strcpy(cgiargs, "");
+    }
+    // TODO 2-3: filename에 프로그램 경로 저장 (예: "./cgi-bin/adder")
+    sprintf(filename, ".%s", uri);
+    // TODO 2-4: return 1 (동적 콘텐츠)
+    return 1;
   }
 }
 
