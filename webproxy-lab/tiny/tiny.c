@@ -173,10 +173,14 @@ int parse_uri(char *uri, char *filename, char *cgiargs)
 }
 
 /*
- * serve_static - Copy a regular file back to the client
+ * serve_static - 정적 파일을 클라이언트에게 효율적으로 전송
  */
+// fd : 클라이언트와 연결된 소켓
+// filename : 전송할 파일명
+// filesize : 파일의 크기
 void serve_static(int fd, char *filename, int filesize)
 {
+  // 변수 선언
   int srcfd;
   char *srcp, filetype[MAXLINE];
   char buf[MAXBUF];
@@ -185,26 +189,40 @@ void serve_static(int fd, char *filename, int filesize)
   int remaining = sizeof(buf);
 
   // TODO 1: get_filetype() 호출해서 파일 타입 결정
-  
+  get_filetype(filename, filetype);
   // TODO 2: HTTP 응답 헤더를 buf에 생성
-  //         - "HTTP/1.0 200 OK\r\n"
-  //         - "Server: Tiny Web Server\r\n"
-  //         - "Connection: close\r\n"
-  //         - "Content-length: %d\r\n" (파일크기)
-  //         - "Content-type: %s\r\n\r\n" (파일타입)
-  //         snprintf 사용할 것!
-  
+  n = snprintf(p, remaining, "HTTP/1.0 200 OK\r\n");
+  p += n;
+  remaining -= n;
+
+  n = snprintf(p, remaining, "Server: Tiny Web Server\r\n");
+  p += n;
+  remaining -= n;
+
+  n = snprintf(p, remaining, "Connection: close\r\n");
+  p += n;
+  remaining -= n;
+
+  n = snprintf(p, remaining, "Content-length: %d\r\n", filesize);
+  p += n;
+  remaining -= n;
+
+  n = snprintf(p, remaining, "Content-type: %s\r\n\r\n", filetype);
+  p += n;
+  remaining -= n;
+  //         snprintf 사용할 것! - 한 줄씩 쓰기
   // TODO 3: Rio_writen()으로 헤더 전송
-  
+  Rio_writen(fd, buf, strlen(buf));
   // TODO 4: 파일을 Open()으로 연다
-  
+  srcfd = Open(filename, O_RDONLY, 0);
   // TODO 5: Mmap()으로 파일을 메모리에 매핑
-  
-  // TODO 6: Close(srcfd) - 파일 디스크립터 종료
-  
-  // TODO 7: Rio_writen()으로 파일 데이터 전송
-  
-  // TODO 8: Munmap()으로 메모리 매핑 해제
+  srcp = Mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+  // TODO 6: Rio_writen()으로 파일 데이터 전송
+  Rio_writen(fd, srcp, filesize);
+  // TODO 7: Munmap()으로 메모리 매핑 해제
+  Munmap(srcp, filesize);
+  // TODO 8: Close(srcfd) - 파일 디스크립터 종료
+  Close(srcfd);
 }
 
 /*
